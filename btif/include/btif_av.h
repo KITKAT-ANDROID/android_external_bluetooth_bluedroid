@@ -125,14 +125,20 @@ bt_status_t btif_av_init(void);
 
 BOOLEAN btif_av_is_connected(void);
 
-/******************************************************************************
+
+/*******************************************************************************
 **
-** Function         btif_av_clear_remote_suspend_flag
+** Function         btif_av_is_peer_edr
 **
-** Description      Clears remote suspended flag
+** Description      Check if the connected a2dp device supports
+**                  EDR or not. Only when connected this function
+**                  will accurately provide a true capability of
+**                  remote peer. If not connected it will always be false.
 **
-** Returns          Void
-********************************************************************************/
-void btif_av_clear_remote_suspend_flag(void);
+** Returns          TRUE if remote device is capable of EDR
+**
+*******************************************************************************/
+
+BOOLEAN btif_av_is_peer_edr(void);
 
 #endif /* BTIF_AV_H */

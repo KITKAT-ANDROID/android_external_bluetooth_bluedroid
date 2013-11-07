@@ -68,6 +68,7 @@ typedef struct
     UINT8                         hh_keep_polling;
     BOOLEAN                       vup_timer_active;
     TIMER_LIST_ENT                vup_timer;
+    BOOLEAN                       local_vup; // Indicated locally initiated VUP
 } btif_hh_device_t;
 
 /* Control block to maintain properties of devices */
@@ -76,7 +77,6 @@ typedef struct
     UINT8             dev_handle;
     bt_bdaddr_t       bd_addr;
     tBTA_HH_ATTR_MASK attr_mask;
-    int priority;
 } btif_hh_added_device_t;
 
 /**

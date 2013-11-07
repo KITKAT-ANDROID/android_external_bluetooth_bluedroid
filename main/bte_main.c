@@ -53,7 +53,7 @@
 
 /* Stack preload process timeout period  */
 #ifndef PRELOAD_START_TIMEOUT_MS
-#define PRELOAD_START_TIMEOUT_MS 5000  // 5 seconds
+#define PRELOAD_START_TIMEOUT_MS 3000  // 3 seconds
 #endif
 
 /* Stack preload process maximum retry attempts  */
@@ -76,8 +76,9 @@ typedef struct
 **  Variables
 ******************************************************************************/
 BOOLEAN hci_logging_enabled = FALSE;    /* by default, turn hci log off */
+BOOLEAN hci_logging_config = FALSE;    /* configured from bluetooth framework */
 char hci_logfile[256] = HCI_LOGGING_FILENAME;
-BOOLEAN hci_ssp_debug_enabled = FALSE; /* by default, turn ssp debug off */
+
 
 /*******************************************************************************
 **  Static variables
@@ -93,7 +94,6 @@ static bt_preload_retry_cb_t preload_retry_cb;
 static void bte_main_in_hw_init(void);
 static void bte_hci_enable(void);
 static void bte_hci_disable(void);
-static void bte_send_preload_req(void);
 static void preload_start_wait_timer(void);
 static void preload_stop_wait_timer(void);
 
@@ -204,7 +204,6 @@ void bte_main_enable()
                     sizeof(bte_btu_stack));
 
     GKI_run(0);
-    bte_send_preload_req();
 }
 
 /******************************************************************************
@@ -229,25 +228,33 @@ void bte_main_disable(void)
 
 /******************************************************************************
 **
-** Function         bte_send_preload_req
+** Function         bte_main_config_hci_logging
 **
-** Description      Request for firmware & transport intialization
+** Description      enable or disable HIC snoop logging
 **
 ** Returns          None
 **
 ******************************************************************************/
-static void bte_send_preload_req(void)
+void bte_main_config_hci_logging(BOOLEAN enable, BOOLEAN bt_disabled)
 {
-    APPL_TRACE_DEBUG1("%s", __FUNCTION__);
-    /* Since btu_task waits to recieve event for preload result(Success or failure) while
-     starting. So btu_task must be started before the firmware & transport is intialized.
-     Otherwise btu_task might miss the event for preload result(success or failure). which
-     could lead a failure while turning on bluetooth. */
-    if (bt_hc_if)
-    {
-       bt_hc_if->preload(NULL);
+    int old = (hci_logging_enabled == TRUE) || (hci_logging_config == TRUE);
+    int new;
+
+    if (enable) {
+        hci_logging_config = TRUE;
+    } else {
+        hci_logging_config = FALSE;
     }
+
+    new = (hci_logging_enabled == TRUE) || (hci_logging_config == TRUE);
+
+    if ((old == new) || bt_disabled || (bt_hc_if == NULL)) {
+        return;
+    }
+
+    bt_hc_if->logging(new ? BT_HC_LOGGING_ON : BT_HC_LOGGING_OFF, hci_logfile);
 }
+
 /******************************************************************************
 **
 ** Function         bte_hci_enable
@@ -270,7 +277,7 @@ static void bte_hci_enable(void)
 
         assert(result == BT_HC_STATUS_SUCCESS);
 
-        if (hci_logging_enabled == TRUE)
+        if (hci_logging_enabled == TRUE || hci_logging_config == TRUE)
             bt_hc_if->logging(BT_HC_LOGGING_ON, hci_logfile);
 
 #if (defined (BT_CLEAN_TURN_ON_DISABLED) && BT_CLEAN_TURN_ON_DISABLED == TRUE)
@@ -293,6 +300,7 @@ static void bte_hci_enable(void)
 #endif
         bt_hc_if->set_power(BT_HC_CHIP_PWR_ON);
 
+        bt_hc_if->preload(NULL);
     }
 }
 
@@ -313,7 +321,7 @@ static void bte_hci_disable(void)
     {
         bt_hc_if->cleanup();
         bt_hc_if->set_power(BT_HC_CHIP_PWR_OFF);
-        if (hci_logging_enabled == TRUE)
+        if (hci_logging_enabled == TRUE ||  hci_logging_config == TRUE)
             bt_hc_if->logging(BT_HC_LOGGING_OFF, hci_logfile);
     }
 }
@@ -338,7 +346,6 @@ static void preload_wait_timeout(union sigval arg)
         bte_hci_disable();
         GKI_delay(100);
         bte_hci_enable();
-        bte_send_preload_req();
     }
     else
     {

@@ -338,13 +338,12 @@ bt_status_t btif_le_test_mode(uint16_t opcode, uint8_t *buf, uint8_t len);
 
 /*******************************************************************************
 **
-** Function         btif_dm_cancel_hid_bond
+** Function         btif_config_hci_snoop_log
 **
-** Description      Cancels bonding to HID device if in progress
+** Description     enable or disable HCI snoop log
 **
-** Returns          bt_status_t
+** Returns          BT_STATUS_SUCCESS on success
 **
 *******************************************************************************/
-bt_status_t btif_dm_cancel_hid_bond(const bt_bdaddr_t *bd_addr);
-
+bt_status_t btif_config_hci_snoop_log(uint8_t enable);
 #endif /* BTIF_API_H */
