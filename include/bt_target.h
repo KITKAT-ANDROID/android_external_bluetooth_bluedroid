@@ -1,7 +1,5 @@
 /******************************************************************************
  *
- *  Copyright (c) 2013, The Linux Foundation. All rights reserved.
- *  Not a Contribution.
  *  Copyright (C) 1999-2012 Broadcom Corporation
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,9 +33,6 @@
 #define BTIF_HFAG_SERVICE_NAME  ("Handsfree Gateway")
 #endif
 
-#ifndef BTIF_HF_CLIENT_SERVICE_NAME
-#define BTIF_HF_CLIENT_SERVICE_NAME  ("Handsfree")
-#endif
 
 #ifdef BUILDCFG
 
@@ -58,16 +53,7 @@
 #include "dyn_mem.h"    /* defines static and/or dynamic memory for components */
 
 
-//------------------Added from Bluedroid buildcfg.h---------------------
-/* This feature is used to update any QCOM related changes in the stack*/
-#ifndef BLUETOOTH_QCOM_SW
-#define BLUETOOTH_QCOM_SW FALSE
-#endif
-
-#ifndef I2SPCM_SLAVE_BRCM
-#define I2SPCM_SLAVE_BRCM FALSE
-#endif
-
+//------------------Added from bdroid_buildcfg.h---------------------
 #ifndef UNV_INCLUDED
 #define UNV_INCLUDED FALSE
 #endif
@@ -199,6 +185,10 @@
 
 #ifndef BTA_HH_ROLE
 #define BTA_HH_ROLE BTA_MASTER_ROLE_PREF
+#endif
+
+#ifndef BTA_HH_LE_INCLUDED
+#define BTA_HH_LE_INCLUDED TRUE
 #endif
 
 #ifndef BTA_AR_INCLUDED
@@ -345,10 +335,6 @@
 #define BTA_AG_SCO_PKT_TYPES  (BTM_SCO_LINK_ONLY_MASK | BTM_SCO_PKT_TYPES_MASK_EV3 |  BTM_SCO_PKT_TYPES_MASK_NO_3_EV3 | BTM_SCO_PKT_TYPES_MASK_NO_2_EV5 | BTM_SCO_PKT_TYPES_MASK_NO_3_EV5)
 #endif
 
-#ifndef BTA_AV_MAX_A2DP_MTU
-#define BTA_AV_MAX_A2DP_MTU  668
-#endif
-
 #ifndef BTA_AV_RET_TOUT
 #define BTA_AV_RET_TOUT 15
 #endif
@@ -363,6 +349,11 @@
 
 #ifndef AVDT_CONNECT_CP_ONLY
 #define AVDT_CONNECT_CP_ONLY  FALSE
+#endif
+
+/* This feature is used to eanble interleaved scan*/
+#ifndef BTA_HOST_INTERLEAVE_SEARCH
+#define BTA_HOST_INTERLEAVE_SEARCH FALSE
 #endif
 
 #ifndef BT_TRACE_PROTOCOL
@@ -424,7 +415,8 @@
 #ifndef BTIF_DM_OOB_TEST
 #define BTIF_DM_OOB_TEST  TRUE
 #endif
-//------------------End added from Bluedroid buildcfg.h---------------------
+
+//------------------End added from bdroid_buildcfg.h---------------------
 
 
 
@@ -859,24 +851,9 @@ and USER_HW_DISABLE_API macros */
 #define BTM_SCO_HCI_INCLUDED            FALSE       /* TRUE includes SCO over HCI code */
 #endif
 
-#if (BLUETOOTH_QCOM_SW == TRUE) /* Enable WBS only under this flag.*/
-#define BTM_WBS_INCLUDED            TRUE
-#define BTC_INCLUDED                TRUE
-#define BLUETOOTH_QCOM_LE_INTL_SCAN TRUE
-#else
 /* Includes WBS if TRUE */
 #ifndef BTM_WBS_INCLUDED
 #define BTM_WBS_INCLUDED            FALSE       /* TRUE includes WBS code */
-#endif
-/* This feature is used to eanble QCOM interleaved scan*/
-#ifndef BLUETOOTH_QCOM_LE_INTL_SCAN
-#define BLUETOOTH_QCOM_LE_INTL_SCAN FALSE
-#endif
-/* BTC */
-#ifndef BTC_INCLUDED
-#define BTC_INCLUDED FALSE
-#endif
-
 #endif
 
 /* Includes PCM2 support if TRUE */
@@ -1082,12 +1059,9 @@ and USER_HW_DISABLE_API macros */
 #define BTM_MAX_LOC_BD_NAME_LEN     248
 #endif
 
-/* TRUE if default string is used, FALSE if device name is set in the application */
-#ifndef BTM_USE_DEF_LOCAL_NAME
-#define BTM_USE_DEF_LOCAL_NAME      TRUE
-#endif
-
-/* Fixed Default String (Ignored if BTM_USE_DEF_LOCAL_NAME is FALSE) */
+/* Fixed Default String. When this is defined as null string, the device's
+ * product model name is used as the default local name.
+ */
 #ifndef BTM_DEF_LOCAL_NAME
 #define BTM_DEF_LOCAL_NAME      ""
 #endif
@@ -2186,11 +2160,6 @@ Range: Minimum 12000 (12 secs) on BR/EDR when supporting PBF.
 #define PAN_NAP_SECURITY_LEVEL           0
 #endif
 
-/*This ensures that PANU Service record will not be advertised on SDP */
-#ifndef PAN_ALWAYS_NAP_NO_PANU_ON_SDP
-#define PAN_ALWAYS_NAP_NO_PANU_ON_SDP TRUE
-#endif
-
 
 
 
@@ -2871,7 +2840,7 @@ Range: Minimum 12000 (12 secs) on BR/EDR when supporting PBF.
 #endif
 
 #ifndef HID_HOST_MAX_CONN_RETRY
-#define HID_HOST_MAX_CONN_RETRY     (1)
+#define HID_HOST_MAX_CONN_RETRY     (3)
 #endif
 
 #ifndef HID_HOST_REPAGE_WIN
@@ -3517,6 +3486,10 @@ Range: Minimum 12000 (12 secs) when supporting PBF.
 #define AVRC_METADATA_INCLUDED      TRUE
 #endif
 
+#ifndef AVRC_ADV_CTRL_INCLUDED
+#define AVRC_ADV_CTRL_INCLUDED      TRUE
+#endif
+
 /******************************************************************************
 **
 ** MCAP
@@ -3794,6 +3767,9 @@ The maximum number of payload octets that the local device can receive in a sing
 #define BTA_AG_CIND_INFO "(\"call\",(0,1)),(\"callsetup\",(0-3)),(\"service\",(0-1)),(\"signal\",(0-5)),(\"roam\",(0,1)),(\"battchg\",(0-5)),(\"callheld\",(0-2))"
 #endif
 
+#ifndef BTA_DM_AVOID_A2DP_ROLESWITCH_ON_INQUIRY
+#define BTA_DM_AVOID_A2DP_ROLESWITCH_ON_INQUIRY TRUE
+#endif
 
 /******************************************************************************
 **

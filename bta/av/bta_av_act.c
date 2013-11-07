@@ -664,9 +664,12 @@ void bta_av_rc_meta_rsp(tBTA_AV_CB *p_cb, tBTA_AV_DATA *p_data)
             (!p_data->api_meta_rsp.is_rsp && (p_cb->features & BTA_AV_FEAT_RCCT)) )
         {
             p_rcb = &p_cb->rcb[p_data->hdr.layer_specific];
-            AVRC_MsgReq(p_rcb->handle, p_data->api_meta_rsp.label, p_data->api_meta_rsp.rsp_code,
-                                      p_data->api_meta_rsp.p_pkt);
-            free = FALSE;
+            if (p_rcb->handle != BTA_AV_RC_HANDLE_NONE) {
+                AVRC_MsgReq(p_rcb->handle, p_data->api_meta_rsp.label,
+                            p_data->api_meta_rsp.rsp_code,
+                            p_data->api_meta_rsp.p_pkt);
+                free = FALSE;
+            }
         }
     }
 
@@ -1738,20 +1741,7 @@ void bta_av_rc_disc_done(tBTA_AV_DATA *p_data)
                 if(p_lcb)
                 {
                     rc_handle = bta_av_rc_create(p_cb, AVCT_INT, (UINT8)(p_scb->hdi + 1), p_lcb->lidx);
-                    if(rc_handle != BTA_AV_RC_HANDLE_NONE)
-                    {
-                        p_cb->rcb[rc_handle].peer_features = peer_features;
-                    }
-                    else
-                    {
-                        /* cannot create valid rc_handle for current device */
-                        APPL_TRACE_ERROR0(" No link resources available");
-                        p_scb->use_rc = FALSE;
-                        bdcpy(rc_open.peer_addr, p_scb->peer_addr);
-                        rc_open.peer_features = 0;
-                        rc_open.status = BTA_AV_FAIL_RESOURCES;
-                        (*p_cb->p_cback)(BTA_AV_RC_CLOSE_EVT, (tBTA_AV *) &rc_open);
-                    }
+                    p_cb->rcb[rc_handle].peer_features = peer_features;
                 }
 #if (BT_USE_TRACES == TRUE || BT_TRACE_APPL == TRUE)
                 else

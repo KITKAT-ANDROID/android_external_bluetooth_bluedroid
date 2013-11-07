@@ -318,42 +318,6 @@ void BTA_DmSetAfhChannelAssessment (BOOLEAN enable_or_disable)
         bta_sys_sendmsg(p_msg);
     }
 }
-/*******************************************************************************
-**
-** Function         BTA_DmHciRawCommand
-**
-** Description      This function sends the HCI Raw  command
-**                  to the controller
-**
-**
-** Returns          tBTA_STATUS
-**
-*******************************************************************************/
-tBTA_STATUS BTA_DmHciRawCommand (UINT16 opcode, UINT8 param_len,
-                                         UINT8 *p_param_buf,
-                                         tBTA_RAW_CMPL_CBACK *p_cback)
-{
-
-    tBTA_DM_API_RAW_COMMAND    *p_msg;
-    UINT16 size;
-
-    size = sizeof (tBTA_DM_API_RAW_COMMAND) + param_len;
-    p_msg = (tBTA_DM_API_RAW_COMMAND *) GKI_getbuf(size);
-    if (p_msg != NULL)
-    {
-        p_msg->hdr.event = BTA_DM_API_HCI_RAW_COMMAND_EVT;
-        p_msg->opcode = opcode;
-        p_msg->param_len = param_len;
-        p_msg->p_param_buf = (UINT8 *)(p_msg + 1);
-        p_msg->p_cback = p_cback;
-
-        memcpy (p_msg->p_param_buf, p_param_buf, param_len);
-
-        bta_sys_sendmsg(p_msg);
-    }
-    return BTA_SUCCESS;
-
-}
 
 /*******************************************************************************
 **
@@ -656,29 +620,6 @@ void BTA_DmLinkPolicy(BD_ADDR bd_addr, tBTA_DM_LP_MASK policy_mask,
     }
 }
 
-/*******************************************************************************
-**
-** Function         BTA_DmRemName
-**
-** Description      This function initiates a Remote Name Request with a peer
-**                  device
-**
-**
-** Returns          void
-**
-*******************************************************************************/
-void BTA_DmRemName(BD_ADDR bd_addr, tBTA_DM_REM_NAME_CBACK * p_cback)
-{
-    tBTA_DM_API_REM_NAME    *p_msg;
-
-    if ((p_msg = (tBTA_DM_API_REM_NAME *) GKI_getbuf(sizeof(tBTA_DM_API_REM_NAME))) != NULL)
-    {
-        p_msg->hdr.event = BTA_DM_API_REM_NAME_EVT;
-        bdcpy(p_msg->bd_addr, bd_addr);
-        p_msg->p_cback = p_cback;
-        bta_sys_sendmsg(p_msg);
-    }
-}
 
 #if (BTM_OOB_INCLUDED == TRUE)
 /*******************************************************************************
@@ -764,7 +705,7 @@ void BTA_DmPasskeyCancel(BD_ADDR bd_addr)
 *******************************************************************************/
 void BTA_DmAddDevice(BD_ADDR bd_addr, DEV_CLASS dev_class, LINK_KEY link_key,
                      tBTA_SERVICE_MASK trusted_mask, BOOLEAN is_trusted,
-                     UINT8 key_type, tBTA_IO_CAP io_cap, UINT8 pin_len)
+                     UINT8 key_type, tBTA_IO_CAP io_cap)
 {
 
     tBTA_DM_API_ADD_DEVICE *p_msg;
@@ -778,7 +719,6 @@ void BTA_DmAddDevice(BD_ADDR bd_addr, DEV_CLASS dev_class, LINK_KEY link_key,
         p_msg->tm = trusted_mask;
         p_msg->is_trusted = is_trusted;
         p_msg->io_cap = io_cap;
-        p_msg->pin_len = pin_len;
 
         if (link_key)
         {
@@ -860,7 +800,6 @@ void BTA_DmAddDevWithName (BD_ADDR bd_addr, DEV_CLASS dev_class,
         p_msg->tm = trusted_mask;
         p_msg->is_trusted = is_trusted;
         p_msg->io_cap = io_cap;
-        p_msg->pin_len = 0;
 
         if (link_key)
         {
@@ -1506,6 +1445,72 @@ void BTA_DmSetBleConnScanParams(UINT16 scan_interval, UINT16 scan_window )
 #endif
 }
 
+/*******************************************************************************
+**
+** Function         BTA_DmSetBleAdvParams
+**
+** Description      This function sets the advertising parameters BLE functionality.
+**                  It is to be called when device act in peripheral or broadcaster
+**                  role.
+**
+**
+** Returns          void
+**
+*******************************************************************************/
+void BTA_DmSetBleAdvParams (UINT16 adv_int_min, UINT16 adv_int_max,
+                           tBLE_BD_ADDR *p_dir_bda)
+{
+#if BLE_INCLUDED == TRUE
+    tBTA_DM_API_BLE_ADV_PARAMS    *p_msg;
+
+    APPL_TRACE_API2 ("BTA_DmSetBleAdvParam: %d, %d", adv_int_min, adv_int_max);
+
+    if ((p_msg = (tBTA_DM_API_BLE_ADV_PARAMS *) GKI_getbuf(sizeof(tBTA_DM_API_BLE_ADV_PARAMS))) != NULL)
+    {
+        memset(p_msg, 0, sizeof(tBTA_DM_API_BLE_ADV_PARAMS));
+
+        p_msg->hdr.event = BTA_DM_API_BLE_ADV_PARAM_EVT;
+
+        p_msg->adv_int_min      = adv_int_min;
+        p_msg->adv_int_max      = adv_int_max;
+
+        if (p_dir_bda != NULL)
+        {
+            p_msg->p_dir_bda = (tBLE_BD_ADDR *)(p_msg + 1);
+            memcpy(p_msg->p_dir_bda, p_dir_bda, sizeof(tBLE_BD_ADDR));
+        }
+
+        bta_sys_sendmsg(p_msg);
+    }
+#endif
+}
+
+#if BLE_INCLUDED == TRUE
+/*******************************************************************************
+**
+** Function         BTA_DmBleSetAdvConfig
+**
+** Description      This function is called to override the BTA default ADV parameters.
+**
+** Parameters       Pointer to User defined ADV data structure
+**
+** Returns          None
+**
+*******************************************************************************/
+void BTA_DmBleSetAdvConfig (tBTA_BLE_AD_MASK data_mask, tBTA_BLE_ADV_DATA *p_adv_cfg)
+{
+    tBTA_DM_API_SET_ADV_CONFIG  *p_msg;
+
+    if ((p_msg = (tBTA_DM_API_SET_ADV_CONFIG *) GKI_getbuf(sizeof(tBTA_DM_API_SET_ADV_CONFIG))) != NULL)
+    {
+        p_msg->hdr.event = BTA_DM_API_BLE_SET_ADV_CONFIG_EVT;
+		p_msg->data_mask = data_mask;
+        p_msg->p_adv_cfg = p_adv_cfg;
+
+        bta_sys_sendmsg(p_msg);
+    }
+}
+#endif
 /*******************************************************************************
 **
 ** Function         BTA_DmBleSetBgConnType
